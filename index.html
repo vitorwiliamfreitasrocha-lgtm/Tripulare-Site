@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tripulare — Do sonho à cabine</title>
+  <meta name="description" content="O app completo para quem quer ser comissário de bordo. Simulados ANAC, road map de carreira, METAR e muito mais." />
+  <style>
+    :root {
+      --teal: #0EB8A0;
+      --teal-dark: #0F766E;
+      --teal-light: #E6FFFB;
+      --teal-mid: #14B8A6;
+      --bg: #F5F7FB;
+      --white: #FFFFFF;
+      --text: #0F172A;
+      --text-sec: #475569;
+      --text-muted: #94A3B8;
+      --border: #E2E8F0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--teal);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .nav-logo-name { font-size: 18px; font-weight: 800; color: var(--teal); }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .lang-toggle {
+      display: flex; gap: 4px;
+      background: var(--bg); border-radius: 8px; padding: 3px;
+      border: 1px solid var(--border);
+    }
+    .lang-btn {
+      padding: 5px 10px; border-radius: 6px; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      background: transparent; color: var(--text-muted); transition: all .2s;
+    }
+    .lang-btn.active { background: var(--teal); color: #fff; }
+    .nav-download {
+      background: var(--teal); color: #fff;
+      border: none; border-radius: 10px;
+      padding: 9px 18px; font-size: 13px; font-weight: 700;
+      cursor: pointer; text-decoration: none; transition: background .2s;
+    }
+    .nav-download:hover { background: var(--teal-dark); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 100px 24px 80px;
+      background: linear-gradient(160deg, #fff 0%, var(--teal-light) 60%, #fff 100%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--teal-light); border: 1px solid #BDEEE7;
+      color: var(--teal-dark); border-radius: 999px;
+      padding: 6px 14px; font-size: 13px; font-weight: 700;
+      margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 900; line-height: 1.1;
+      color: var(--text); margin-bottom: 10px;
+    }
+    .hero h1 span { color: var(--teal); }
+    .hero-slogan {
+      font-size: clamp(18px, 3vw, 26px);
+      font-weight: 700; color: var(--text-sec);
+      margin-bottom: 20px; font-style: italic;
+    }
+    .hero-sub {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--text-sec); line-height: 1.7;
+      max-width: 560px; margin: 0 auto 40px;
+    }
+    .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--teal); color: #fff;
+      border-radius: 14px; padding: 16px 28px;
+      font-size: 16px; font-weight: 800;
+      text-decoration: none; transition: background .2s; border: none; cursor: pointer;
+    }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #fff; color: var(--text);
+      border-radius: 14px; padding: 16px 28px;
+      font-size: 16px; font-weight: 700;
+      text-decoration: none; border: 1px solid var(--border);
+      transition: border-color .2s; cursor: pointer;
+    }
+    .btn-secondary:hover { border-color: var(--teal); color: var(--teal); }
+    .hero-note { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+
+    /* ── MOCKUP PLACEHOLDER ── */
+    .mockup-wrap {
+      margin-top: 64px;
+      display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+    }
+    .mockup-phone {
+      width: 200px; height: 400px;
+      background: var(--white);
+      border-radius: 32px;
+      border: 6px solid #1E293B;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.12);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: var(--text-muted);
+      font-size: 13px; font-weight: 600;
+      position: relative; overflow: hidden;
+    }
+    .mockup-phone::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; background: var(--teal);
+    }
+    .mockup-phone:nth-child(2) { margin-top: -24px; width: 220px; height: 440px; }
+    .mockup-icon { font-size: 32px; margin-bottom: 4px; }
+    .mockup-label { color: var(--teal); font-weight: 800; font-size: 14px; }
+
+    /* ── SECTION ── */
+    section { padding: 96px 24px; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-tag {
+      display: inline-block;
+      background: var(--teal-light); color: var(--teal-dark);
+      border-radius: 999px; padding: 5px 14px;
+      font-size: 12px; font-weight: 800; letter-spacing: 0.6px;
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(26px, 4vw, 40px);
+      font-weight: 900; color: var(--text);
+      line-height: 1.2; margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 17px; color: var(--text-sec);
+      line-height: 1.7; max-width: 560px;
+    }
+
+    /* ── FEATURES ── */
+    .features-bg { background: #fff; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px; margin-top: 52px;
+    }
+    .feature-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .feature-card:hover { box-shadow: 0 8px 32px rgba(14,184,160,.12); transform: translateY(-2px); }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--teal-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 18px;
+    }
+    .feature-title { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .feature-desc { font-size: 14px; color: var(--text-sec); line-height: 1.65; }
+    .feature-badge {
+      display: inline-block; margin-top: 12px;
+      background: var(--teal); color: #fff;
+      border-radius: 999px; padding: 3px 10px;
+      font-size: 11px; font-weight: 700;
+    }
+
+    /* ── WHO ── */
+    .who-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 20px; margin-top: 52px;
+    }
+    .who-card {
+      border-radius: 20px; padding: 36px;
+      border: 1px solid var(--border);
+    }
+    .who-card.aspirante { background: var(--teal-light); border-color: #BDEEE7; }
+    .who-card.aeronauta { background: #FEF9C3; border-color: #FDE68A; }
+    .who-icon { font-size: 36px; margin-bottom: 16px; }
+    .who-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+    .who-desc { font-size: 15px; color: var(--text-sec); line-height: 1.65; margin-bottom: 16px; }
+    .who-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .who-list li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-sec); font-weight: 600; }
+    .who-list li::before { content: '✓'; color: var(--teal); font-weight: 900; }
+
+    /* ── ROADMAP PREVIEW ── */
+    .roadmap-bg { background: var(--bg); }
+    .roadmap-steps {
+      display: flex; flex-direction: column; gap: 0;
+      margin-top: 52px; max-width: 600px;
+    }
+    .roadmap-step {
+      display: flex; gap: 20px; align-items: flex-start;
+      position: relative;
+    }
+    .roadmap-step:not(:last-child)::after {
+      content: ''; position: absolute;
+      left: 19px; top: 44px;
+      width: 2px; height: calc(100% - 4px);
+      background: var(--border);
+    }
+    .roadmap-num {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--white); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: var(--text-sec);
+      flex-shrink: 0; z-index: 1;
+    }
+    .roadmap-num.highlight { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .roadmap-content { padding-bottom: 32px; }
+    .roadmap-step-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .roadmap-step-desc { font-size: 14px; color: var(--text-sec); line-height: 1.6; }
+    .app-helps { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; background: var(--teal); color: #fff; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+
+    /* ── CTA ── */
+    .cta-section {
+      background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+      text-align: center;
+    }
+    .cta-section .section-title { color: #fff; }
+    .cta-section .section-sub { color: rgba(255,255,255,0.8); margin: 0 auto 40px; }
+    .cta-section .btn-primary { background: #fff; color: var(--teal-dark); }
+    .cta-section .btn-primary:hover { background: var(--teal-light); }
+    .cta-note { margin-top: 16px; color: rgba(255,255,255,0.65); font-size: 13px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #0F172A; color: #94A3B8;
+      padding: 48px 24px 32px;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 32px;
+    }
+    .footer-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 24px; }
+    .footer-brand .nav-logo-name { color: var(--teal); }
+    .footer-brand p { margin-top: 8px; font-size: 14px; color: #64748B; max-width: 280px; line-height: 1.6; }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    .footer-links a { color: #64748B; text-decoration: none; font-size: 14px; font-weight: 600; transition: color .2s; }
+    .footer-links a:hover { color: var(--teal); }
+    .footer-bottom {
+      border-top: 1px solid #1E293B;
+      padding-top: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+      font-size: 13px; color: #475569;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .who-grid { grid-template-columns: 1fr; }
+      .nav-download { display: none; }
+      .mockup-phone:nth-child(1), .mockup-phone:nth-child(3) { display: none; }
+      .footer-top { flex-direction: column; }
+    }
+
+    /* ── LANG TOGGLE ── */
+    [data-lang] { display: none; }
+    .lang-pt [data-lang="pt"] { display: block; }
+    .lang-pt [data-lang-inline="pt"] { display: inline; }
+    .lang-en [data-lang="en"] { display: block; }
+    .lang-en [data-lang-inline="en"] { display: inline; }
+    .lang-pt .hero-slogan-pt { display: block; }
+    .lang-en .hero-slogan-en { display: block; }
+  </style>
+</head>
+<body class="lang-pt">
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">
+      <div class="nav-logo-icon">✈️</div>
+      <span class="nav-logo-name">Tripulare</span>
+    </a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+      <a class="nav-download" href="#download">
+        <span data-lang-inline="pt">Baixar app</span>
+        <span data-lang-inline="en">Download</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span>✈️</span>
+      <span data-lang-inline="pt">Aviação civil brasileira</span>
+      <span data-lang-inline="en">Brazilian civil aviation</span>
+    </div>
+
+    <h1>
+      <span data-lang-inline="pt">Seu caminho para ser<br/><span style="color:var(--teal)">Comissário de Bordo</span></span>
+      <span data-lang-inline="en">Your path to become a<br/><span style="color:var(--teal)">Flight Attendant</span></span>
+    </h1>
+
+    <p class="hero-slogan" data-lang="pt">"Do sonho à cabine"</p>
+    <p class="hero-slogan" data-lang="en">"From dream to cabin crew"</p>
+
+    <p class="hero-sub">
+      <span data-lang-inline="pt">O app completo para quem quer entrar na aviação. Estude para a banca da ANAC, acompanhe seu road map de carreira e consulte informações do setor.</span>
+      <span data-lang-inline="en">The complete app for those who want to enter aviation. Study for the ANAC exam, track your career roadmap, and access industry information.</span>
+    </p>
+
+    <div class="hero-buttons">
+      <a class="btn-primary" href="#download">
+        <span>▶</span>
+        <span data-lang-inline="pt">Baixar no Google Play</span>
+        <span data-lang-inline="en">Get it on Google Play</span>
+      </a>
+      <a class="btn-secondary" href="#features">
+        <span data-lang-inline="pt">Ver funcionalidades</span>
+        <span data-lang-inline="en">See features</span>
+      </a>
+    </div>
+    <p class="hero-note">
+      <span data-lang-inline="pt">Gratuito para baixar · Android</span>
+      <span data-lang-inline="en">Free to download · Android</span>
+    </p>
+
+    <div class="mockup-wrap">
+      <div class="mockup-phone">
+        <div class="mockup-icon">🗺️</div>
+        <div class="mockup-label">
+          <span data-lang-inline="pt">Road Map</span>
+          <span data-lang-inline="en">Career Map</span>
+        </div>
+        <div style="font-size:12px">
+          <span data-lang-inline="pt">Carreira</span>
+          <span data-lang-inline="en">Career</span>
+        </div>
+      </div>
+      <div class="mockup-phone">
+        <div class="mockup-icon">📝</div>
+        <div class="mockup-label">Simulados ANAC</div>
+        <div style="font-size:12px">
+          <span data-lang-inline="pt">Estude para a banca</span>
+          <span data-lang-inline="en">Study for the exam</span>
+        </div>
+      </div>
+      <div class="mockup-phone">
+        <div class="mockup-icon">⛅</div>
+        <div class="mockup-label">METAR</div>
+        <div style="font-size:12px">
+          <span data-lang-inline="pt">Meteorologia</span>
+          <span data-lang-inline="en">Weather</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features-bg" id="features">
+    <div class="section-inner">
+      <div class="section-tag">
+        <span data-lang-inline="pt">Funcionalidades</span>
+        <span data-lang-inline="en">Features</span>
+      </div>
+      <h2 class="section-title">
+        <span data-lang-inline="pt">Tudo que você precisa<br/>em um só lugar</span>
+        <span data-lang-inline="en">Everything you need<br/>in one place</span>
+      </h2>
+      <p class="section-sub">
+        <span data-lang-inline="pt">Do estudo para a prova até o acompanhamento da sua carreira — o Tripulare tem você coberto.</span>
+        <span data-lang-inline="en">From exam preparation to career tracking — Tripulare has you covered.</span>
+      </p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📝</div>
+          <div class="feature-title">
+            <span data-lang-inline="pt">Simulados ANAC</span>
+            <span data-lang-inline="en">ANAC Practice Tests</span>
+          </div>
+          <p class="feature-desc">
+            <span data-lang-inline="pt">Questões no estilo da banca oficial da ANAC. 20 questões por simulado com gabarito e histórico de desempenho.</span>
+            <span data-lang-inline="en">Questions in the style of the official ANAC exam. 20 questions per test with answer key and performance history.</span>
+          </p>
+          <span class="feature-badge">
+            <span data-lang-inline="pt">Principal funcionalidade</span>
+            <span data-lang-inline="en">Main feature</span>
+          </span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🗺️</div>
+          <div class="feature-title">
+            <span data-lang-inline="pt">Road Map de Carreira</span>
+            <span data-lang-inline="en">Career Roadmap</span>
+          </div>
+          <p class="feature-desc">
+            <span data-lang-inline="pt">Guia passo a passo da jornada completa: do curso de comissário até a contratação em uma companhia aérea.</span>
+            <span data-lang-inline="en">Step-by-step guide of the complete journey: from the cabin crew course to getting hired by an airline.</span>
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⛅</div>
+          <div class="feature-title">
+            <span data-lang-inline="pt">Consulta de METAR</span>
+            <span data-lang-inline="en">METAR Lookup</span>
+          </div>
+          <p class="feature-desc">
+            <span data-lang-inline="pt">Busque por nome, cidade ou código ICAO e veja o METAR completo com versão simplificada para fácil entendimento.</span>
+            <span data-lang-inline="en">Search by name, city or ICAO code and view the full METAR with a simplified version for easy understanding.</span>
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🗞️</div>
+          <div class="feature-title">
+            <span data-lang-inline="pt">Notícias da Aviação</span>
+            <span data-lang-inline="en">Aviation News</span>
+          </div>
+          <p class="feature-desc">
+            <span data-lang-inline="pt">Fique por dentro do mercado com notícias de Aeroin, Aeroflap, Airway e outros veículos especializados.</span>
+            <span data-lang-inline="en">Stay up to date with news from Aeroin, Aeroflap, Airway and other specialized outlets.</span>
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🌍</div>
+          <div class="feature-title">
+            <span data-lang-inline="pt">Guia de Aeroportos</span>
+            <span data-lang-inline="en">Airport Guide</span>
+          </div>
+          <p class="feature-desc">
+            <span data-lang-inline="pt">+70 aeroportos brasileiros e internacionais com código ICAO, pistas, elevação e coordenadas.</span>
+            <span data-lang-inline="en">70+ Brazilian and international airports with ICAO code, runways, elevation and coordinates.</span>
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎙️</div>
+          <div class="feature-title">
+            <span data-lang-inline="pt">Inglês de Bordo</span>
+            <span data-lang-inline="en">Cabin English</span>
+          </div>
+          <p class="feature-desc">
+            <span data-lang-inline="pt">Speeches de bordo, pronúncia e teste de voz no padrão ICAO para se preparar para voos internacionais.</span>
+            <span data-lang-inline="en">Cabin speeches, pronunciation and ICAO voice test to prepare for international flights.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO -->
+  <section id="publico">
+    <div class="section-inner">
+      <div class="section-tag">
+        <span data-lang-inline="pt">Público</span>
+        <span data-lang-inline="en">Who it's for</span>
+      </div>
+      <h2 class="section-title">
+        <span data-lang-inline="pt">Para quem é o Tripulare?</span>
+        <span data-lang-inline="en">Who is Tripulare for?</span>
+      </h2>
+
+      <div class="who-grid">
+        <div class="who-card aspirante">
+          <div class="who-icon">🎓</div>
+          <div class="who-title">
+            <span data-lang-inline="pt">Aspirante a Comissário</span>
+            <span data-lang-inline="en">Aspiring Cabin Crew</span>
+          </div>
+          <p class="who-desc">
+            <span data-lang-inline="pt">Você quer entrar na aviação e precisa se preparar para a banca da ANAC e entender a jornada de carreira.</span>
+            <span data-lang-inline="en">You want to enter aviation and need to prepare for the ANAC exam and understand the career journey.</span>
+          </p>
+          <ul class="who-list">
+            <li><span data-lang-inline="pt">Simulados no estilo ANAC</span><span data-lang-inline="en">ANAC-style practice tests</span></li>
+            <li><span data-lang-inline="pt">Road map passo a passo</span><span data-lang-inline="en">Step-by-step roadmap</span></li>
+            <li><span data-lang-inline="pt">Inglês de bordo</span><span data-lang-inline="en">Cabin English training</span></li>
+            <li><span data-lang-inline="pt">Acompanhamento de conquistas</span><span data-lang-inline="en">Achievement tracking</span></li>
+          </ul>
+        </div>
+
+        <div class="who-card aeronauta">
+          <div class="who-icon">✈️</div>
+          <div class="who-title">
+            <span data-lang-inline="pt">Aeronauta / Comissário</span>
+            <span data-lang-inline="en">Aviation Professional</span>
+          </div>
+          <p class="who-desc">
+            <span data-lang-inline="pt">Você já voa e quer um painel com informações meteorológicas, notícias do setor e conexão com a comunidade.</span>
+            <span data-lang-inline="en">You already fly and want a dashboard with weather information, industry news and community connection.</span>
+          </p>
+          <ul class="who-list">
+            <li><span data-lang-inline="pt">Consulta rápida de METAR</span><span data-lang-inline="en">Quick METAR lookup</span></li>
+            <li><span data-lang-inline="pt">Notícias da aviação</span><span data-lang-inline="en">Aviation news feed</span></li>
+            <li><span data-lang-inline="pt">Guia de aeroportos</span><span data-lang-inline="en">Airport guide</span></li>
+            <li><span data-lang-inline="pt">Perfil profissional</span><span data-lang-inline="en">Professional profile</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP PREVIEW -->
+  <section class="roadmap-bg">
+    <div class="section-inner">
+      <div class="section-tag">
+        <span data-lang-inline="pt">Road Map</span>
+        <span data-lang-inline="en">Career Path</span>
+      </div>
+      <h2 class="section-title">
+        <span data-lang-inline="pt">A jornada para ser comissário</span>
+        <span data-lang-inline="en">The journey to become cabin crew</span>
+      </h2>
+      <p class="section-sub">
+        <span data-lang-inline="pt">O Tripulare guia você em cada etapa do processo, do zero à contratação.</span>
+        <span data-lang-inline="en">Tripulare guides you through every step of the process, from scratch to getting hired.</span>
+      </p>
+
+      <div class="roadmap-steps">
+        <div class="roadmap-step">
+          <div class="roadmap-num">★</div>
+          <div class="roadmap-content">
+            <div class="roadmap-step-title">
+              <span data-lang-inline="pt">Pré-requisitos</span>
+              <span data-lang-inline="en">Prerequisites</span>
+            </div>
+            <div class="roadmap-step-desc">
+              <span data-lang-inline="pt">Ensino médio, 18 anos, altura dentro do padrão e inglês básico.</span>
+              <span data-lang-inline="en">High school diploma, 18 years old, standard height and basic English.</span>
+            </div>
+          </div>
+        </div>
+        <div class="roadmap-step">
+          <div class="roadmap-num">1</div>
+          <div class="roadmap-content">
+            <div class="roadmap-step-title">
+              <span data-lang-inline="pt">Curso de Comissário</span>
+              <span data-lang-inline="en">Cabin Crew Course</span>
+            </div>
+            <div class="roadmap-step-desc">
+              <span data-lang-inline="pt">Formação técnica certificada pela ANAC. 1 a 4 meses.</span>
+              <span data-lang-inline="en">Technical training certified by ANAC. 1 to 4 months.</span>
+            </div>
+          </div>
+        </div>
+        <div class="roadmap-step">
+          <div class="roadmap-num highlight">4</div>
+          <div class="roadmap-content">
+            <div class="roadmap-step-title">
+              <span data-lang-inline="pt">Banca da ANAC</span>
+              <span data-lang-inline="en">ANAC Exam</span>
+            </div>
+            <div class="roadmap-step-desc">
+              <span data-lang-inline="pt">Prova teórica para obtenção do CHVP — habilitação oficial de comissário.</span>
+              <span data-lang-inline="en">Theoretical exam to obtain the CHVP — official cabin crew license.</span>
+            </div>
+            <div class="app-helps">
+              <span>✦</span>
+              <span data-lang-inline="pt">App ajuda aqui</span>
+              <span data-lang-inline="en">App helps here</span>
+            </div>
+          </div>
+        </div>
+        <div class="roadmap-step">
+          <div class="roadmap-num">6</div>
+          <div class="roadmap-content">
+            <div class="roadmap-step-title">
+              <span data-lang-inline="pt">Processo Seletivo</span>
+              <span data-lang-inline="en">Selection Process</span>
+            </div>
+            <div class="roadmap-step-desc">
+              <span data-lang-inline="pt">Triagem, testes online, dinâmica de grupo, entrevistas e exames.</span>
+              <span data-lang-inline="en">Screening, online tests, group dynamics, interviews and exams.</span>
+            </div>
+          </div>
+        </div>
+        <div class="roadmap-step">
+          <div class="roadmap-num" style="background:var(--teal);border-color:var(--teal);color:#fff">🏆</div>
+          <div class="roadmap-content">
+            <div class="roadmap-step-title">
+              <span data-lang-inline="pt">Contratado! ✈️</span>
+              <span data-lang-inline="en">Hired! ✈️</span>
+            </div>
+            <div class="roadmap-step-desc">
+              <span data-lang-inline="pt">Bem-vindo à aviação brasileira.</span>
+              <span data-lang-inline="en">Welcome to Brazilian aviation.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA DOWNLOAD -->
+  <section class="cta-section" id="download">
+    <div class="section-inner" style="text-align:center">
+      <h2 class="section-title">
+        <span data-lang-inline="pt">Comece sua jornada hoje</span>
+        <span data-lang-inline="en">Start your journey today</span>
+      </h2>
+      <p class="section-sub">
+        <span data-lang-inline="pt">Junte-se a quem já está se preparando para decolar na aviação.</span>
+        <span data-lang-inline="en">Join those already preparing to take off in aviation.</span>
+      </p>
+      <a class="btn-primary" href="#" style="margin:0 auto;display:inline-flex">
+        <span>▶</span>
+        <span data-lang-inline="pt">Baixar no Google Play</span>
+        <span data-lang-inline="en">Get it on Google Play</span>
+      </a>
+      <p class="cta-note">
+        <span data-lang-inline="pt">Em breve disponível · Android</span>
+        <span data-lang-inline="en">Coming soon · Android</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="nav-logo">
+            <div class="nav-logo-icon">✈️</div>
+            <span class="nav-logo-name">Tripulare</span>
+          </div>
+          <p>
+            <span data-lang-inline="pt">Do sonho à cabine. O app para quem quer voar.</span>
+            <span data-lang-inline="en">From dream to cabin crew. The app for those who want to fly.</span>
+          </p>
+        </div>
+        <div class="footer-links">
+          <a href="/privacidade.html">
+            <span data-lang-inline="pt">Política de Privacidade</span>
+            <span data-lang-inline="en">Privacy Policy</span>
+          </a>
+          <a href="/termos.html">
+            <span data-lang-inline="pt">Termos de Uso</span>
+            <span data-lang-inline="en">Terms of Use</span>
+          </a>
+          <a href="/deletar-conta.html">
+            <span data-lang-inline="pt">Excluir Conta</span>
+            <span data-lang-inline="en">Delete Account</span>
+          </a>
+          <a href="mailto:tripulare@gmail.com">
+            <span data-lang-inline="pt">Suporte</span>
+            <span data-lang-inline="en">Support</span>
+          </a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2025 Tripulare. <span data-lang-inline="pt">Todos os direitos reservados.</span><span data-lang-inline="en">All rights reserved.</span></span>
+        <span>
+          <span data-lang-inline="pt">Feito com ❤️ para a aviação brasileira</span>
+          <span data-lang-inline="en">Made with ❤️ for Brazilian aviation</span>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function setLang(lang) {
+      document.body.className = 'lang-' + lang;
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === lang.toUpperCase());
+      });
+      document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+    }
+  </script>
+</body>
+</html>
