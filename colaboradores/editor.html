@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Editor — Crew Life</title>
+  <link rel="icon" href="../assets/tripulare-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" />
+  <link rel="stylesheet" href="../assets/crewlife/admin.css" />
+  <link rel="stylesheet" href="../assets/crewlife/editor.css" />
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+</head>
+<body>
+  <header class="topbar"></header>
+
+  <div id="loading" class="loading"><div><div class="spinner"></div>Abrindo editor…</div></div>
+
+  <main class="editor-layout" id="layout" hidden>
+    <section class="editor-main">
+      <div class="crumbs"><a href="./">Início</a> / <a href="crew-life.html">Crew Life</a> / <span id="crumbMode">Novo post</span></div>
+      <div id="restore" class="msg warn" hidden></div>
+
+      <textarea id="title" class="title-input" rows="1" maxlength="200" placeholder="Título do post"></textarea>
+
+      <div class="editor-card">
+        <div id="toolbar">
+          <span class="ql-formats">
+            <button type="button" class="ql-undo" title="Desfazer (Ctrl+Z)">↶</button>
+            <button type="button" class="ql-redo" title="Refazer (Ctrl+Y)">↷</button>
+          </span>
+          <span class="ql-formats">
+            <select class="ql-header" title="Estilo do parágrafo">
+              <option value="2">Título</option>
+              <option value="3">Subtítulo</option>
+              <option selected>Parágrafo</option>
+            </select>
+            <select class="ql-font" title="Fonte">
+              <option selected>Padrão</option>
+              <option value="sora">Sora</option>
+              <option value="serif">Serifada</option>
+              <option value="monospace">Máquina</option>
+            </select>
+            <select class="ql-size" title="Tamanho da fonte">
+              <option value="13px">Pequeno</option>
+              <option selected>Normal</option>
+              <option value="20px">Médio</option>
+              <option value="24px">Grande</option>
+              <option value="30px">Muito grande</option>
+              <option value="38px">Enorme</option>
+            </select>
+          </span>
+          <span class="ql-formats">
+            <button type="button" class="ql-bold" title="Negrito (Ctrl+B)"></button>
+            <button type="button" class="ql-italic" title="Itálico (Ctrl+I)"></button>
+            <button type="button" class="ql-underline" title="Sublinhado (Ctrl+U)"></button>
+            <button type="button" class="ql-strike" title="Tachado"></button>
+          </span>
+          <span class="ql-formats">
+            <select class="ql-color" title="Cor do texto"></select>
+            <select class="ql-background" title="Cor de destaque"></select>
+          </span>
+          <span class="ql-formats">
+            <button type="button" class="ql-link" title="Inserir link (Ctrl+K)"></button>
+            <button type="button" class="ql-image" title="Inserir imagem"></button>
+            <button type="button" class="ql-video" title="Inserir vídeo do YouTube"></button>
+          </span>
+          <span class="ql-formats">
+            <button type="button" class="ql-list" value="ordered" title="Lista numerada"></button>
+            <button type="button" class="ql-list" value="bullet" title="Lista com marcadores"></button>
+            <button type="button" class="ql-indent" value="-1" title="Diminuir recuo"></button>
+            <button type="button" class="ql-indent" value="+1" title="Aumentar recuo"></button>
+          </span>
+          <span class="ql-formats">
+            <select class="ql-align" title="Alinhamento"></select>
+            <button type="button" class="ql-blockquote" title="Citação"></button>
+            <button type="button" class="ql-divider" title="Linha divisória">―</button>
+          </span>
+          <span class="ql-formats">
+            <button type="button" class="ql-clean" title="Limpar formatação"></button>
+          </span>
+        </div>
+        <div class="editor-wrap" id="editorWrap">
+          <div id="editor"></div>
+          <div class="img-tools" id="imgTools" hidden>
+            <span>Tamanho:</span>
+            <button type="button" data-w="25%">P</button>
+            <button type="button" data-w="50%">M</button>
+            <button type="button" data-w="75%">G</button>
+            <button type="button" data-w="">100%</button>
+            <button type="button" data-remove title="Remover imagem">🗑</button>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Dica: arraste ou cole imagens direto no texto. Clique numa imagem para mudar o tamanho; use os botões de alinhamento para centralizá-la.</p>
+    </section>
+
+    <aside class="editor-side">
+      <div class="side-card">
+        <div class="status-line">Status: <span class="badge draft" id="statusBadge">Rascunho</span></div>
+        <div class="saved" id="savedInfo">Ainda não salvo</div>
+        <div class="side-actions">
+          <button class="btn" id="publishBtn">Publicar</button>
+          <button class="btn ghost" id="saveBtn">Salvar rascunho</button>
+          <button class="btn ghost" id="previewBtn">👁 Visualizar</button>
+        </div>
+        <a class="view-link" id="viewLink" target="_blank" hidden>Ver no site ↗</a>
+      </div>
+
+      <div class="side-card">
+        <h3>Imagem de capa</h3>
+        <p class="side-help">Aparece no topo do post, na lista do site e no card do app. Ideal: horizontal (16:9).</p>
+        <label class="cover-drop" id="coverDrop">
+          <input type="file" accept="image/*" id="coverInput" hidden />
+          <img id="coverImg" alt="" hidden />
+          <span id="coverPlaceholder">＋ Escolher imagem</span>
+        </label>
+        <div class="cover-actions" id="coverActions" hidden>
+          <button class="btn sm ghost" id="coverChange">Trocar</button>
+          <button class="btn sm danger-ghost" id="coverRemove">Remover</button>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <h3>Resumo</h3>
+        <p class="side-help">A prévia que aparece no app e na lista. Deixe vazio para usar o começo do texto.</p>
+        <textarea id="excerpt" class="input" rows="4" maxlength="300" placeholder="Gerado automaticamente a partir do texto"></textarea>
+        <div class="counter"><span id="excerptCount">0</span>/300</div>
+      </div>
+
+      <div class="side-card stats">
+        <div><b id="words">0</b><span>palavras</span></div>
+        <div><b id="minutes">1</b><span>min de leitura</span></div>
+      </div>
+
+      <button class="btn danger-ghost delete-btn" id="deleteBtn" hidden>Excluir este post</button>
+    </aside>
+  </main>
+
+  <!-- Pré-visualização -->
+  <div class="preview-bg" id="preview" hidden>
+    <div class="preview-bar">
+      <div class="seg">
+        <button class="on" data-device="desktop">💻 Site</button>
+        <button data-device="mobile">📱 Celular</button>
+      </div>
+      <button class="btn sm" id="closePreview">Fechar</button>
+    </div>
+    <div class="preview-stage"><iframe id="previewFrame" title="Pré-visualização"></iframe></div>
+  </div>
+
+  <script type="module" src="../assets/crewlife/editor.js"></script>
+</body>
+</html>

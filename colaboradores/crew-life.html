@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Crew Life — Colaboradores</title>
+  <link rel="icon" href="../assets/tripulare-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/crewlife/admin.css" />
+</head>
+<body>
+  <header class="topbar"></header>
+  <main class="container">
+    <div class="crumbs"><a href="./">Início</a> / Crew Life</div>
+    <h1 class="page-title">Crew Life</h1>
+    <p class="page-sub">Os posts publicados aparecem no site (tripulare.com.br/crew-life) e os 3 mais recentes na Home do app.</p>
+
+    <div class="hub">
+      <a class="hub-card" href="editor.html">
+        <div class="ic">✎</div><h3>Criar novo post</h3><p>Escreva com título, imagens, links e formatação.</p>
+      </a>
+      <button class="hub-card amber" data-mode="edit">
+        <div class="ic">☰</div><h3>Editar posts existentes</h3><p>Altere textos, imagens ou despublique um post.</p>
+      </button>
+      <button class="hub-card red" data-mode="delete">
+        <div class="ic">🗑</div><h3>Excluir posts</h3><p>Remova um ou vários posts de uma vez.</p>
+      </button>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2 id="panelTitle">Seus posts</h2>
+        <div class="filters">
+          <button class="chip on" data-filter="all">Todos</button>
+          <button class="chip" data-filter="published">Publicados</button>
+          <button class="chip" data-filter="draft">Rascunhos</button>
+          <input class="input" id="search" type="search" placeholder="Buscar por título…" />
+        </div>
+      </div>
+      <div class="bulk" id="bulk" hidden>
+        <span id="bulkCount">0 selecionados</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm ghost" id="selectAll">Selecionar todos</button>
+          <button class="btn sm danger" id="bulkDelete" disabled>Excluir selecionados</button>
+        </div>
+      </div>
+      <div id="list"><div class="empty-row"><div class="spinner"></div>Carregando posts…</div></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { db, requireStaff, toast, confirmDialog, friendlyError } from '../assets/crewlife/admin.js';
+    import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { POSTS_COLLECTION, escapeHtml, cloudinaryResize, postUrl } from '../assets/crewlife/config.js';
+
+    await requireStaff();
+
+    const $ = (id) => document.getElementById(id);
+    let posts = [];
+    let mode = location.hash === '#excluir' ? 'delete' : 'edit';
+    let filter = 'all';
+    const selected = new Set();
+
+    const fmt = (ts) => ts?.toDate ? ts.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+    async function load() {
+      try {
+        const snap = await getDocs(query(collection(db, POSTS_COLLECTION), orderBy('updatedAt', 'desc')));
+        posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        render();
+      } catch (e) {
+        $('list').innerHTML = `<div class="empty-row">${escapeHtml(friendlyError(e))}</div>`;
+      }
+    }
+
+    function visible() {
+      const q = $('search').value.trim().toLowerCase();
+      return posts.filter((p) => (filter === 'all' || p.status === filter) && (!q || (p.title || '').toLowerCase().includes(q)));
+    }
+
+    function render() {
+      document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('selected', b.dataset.mode === mode));
+      $('panelTitle').textContent = mode === 'delete' ? 'Selecione os posts para excluir' : 'Seus posts';
+      $('bulk').hidden = mode !== 'delete';
+      $('bulkCount').textContent = `${selected.size} selecionado${selected.size === 1 ? '' : 's'}`;
+      $('bulkDelete').disabled = selected.size === 0;
+
+      const list = visible();
+      if (!posts.length) {
+        $('list').innerHTML = `<div class="empty-row">Nenhum post ainda. <a href="editor.html">Criar o primeiro post</a></div>`;
+        return;
+      }
+      if (!list.length) { $('list').innerHTML = `<div class="empty-row">Nenhum post encontrado com esse filtro.</div>`; return; }
+
+      $('list').innerHTML = list.map((p) => {
+        const pub = p.status === 'published';
+        const thumb = p.coverUrl ? `style="background-image:url('${escapeHtml(cloudinaryResize(p.coverUrl, 'c_fill,w_160,h_120,q_auto,f_auto'))}')"` : '';
+        const actions = mode === 'delete'
+          ? `<button class="btn sm danger-ghost" data-del="${escapeHtml(p.id)}">Excluir</button>`
+          : `${pub ? `<a class="btn sm ghost" target="_blank" href="${postUrl(p.id)}">Ver no site</a>` : ''}
+             <a class="btn sm" href="editor.html?id=${encodeURIComponent(p.id)}">Editar</a>`;
+        return `<div class="row">
+          ${mode === 'delete' ? `<input type="checkbox" data-check="${escapeHtml(p.id)}" ${selected.has(p.id) ? 'checked' : ''} aria-label="Selecionar" />` : ''}
+          <div class="thumb" ${thumb}></div>
+          <div class="info">
+            <b>${escapeHtml(p.title || '(sem título)')}</b>
+            <small><span class="badge ${pub ? 'pub' : 'draft'}">${pub ? 'Publicado' : 'Rascunho'}</span>
+            Atualizado em ${fmt(p.updatedAt)}${p.authorName ? ` · ${escapeHtml(p.authorName)}` : ''}</small>
+          </div>
+          <div class="actions">${actions}</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function removePosts(ids) {
+      const n = ids.length;
+      const ok = await confirmDialog({
+        title: n === 1 ? 'Excluir este post?' : `Excluir ${n} posts?`,
+        text: 'Ele sai do site e do app imediatamente. Essa ação não pode ser desfeita.',
+        okLabel: 'Excluir', danger: true,
+      });
+      if (!ok) return;
+      try {
+        await Promise.all(ids.map((id) => deleteDoc(doc(db, POSTS_COLLECTION, id))));
+        posts = posts.filter((p) => !ids.includes(p.id));
+        ids.forEach((id) => selected.delete(id));
+        render();
+        toast(n === 1 ? 'Post excluído.' : `${n} posts excluídos.`);
+      } catch (e) { toast(friendlyError(e), 'error'); }
+    }
+
+    document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.mode;
+      history.replaceState(null, '', mode === 'delete' ? '#excluir' : '#editar');
+      selected.clear();
+      render();
+      document.querySelector('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    document.querySelectorAll('[data-filter]').forEach((b) => b.addEventListener('click', () => {
+      filter = b.dataset.filter;
+      document.querySelectorAll('[data-filter]').forEach((x) => x.classList.toggle('on', x === b));
+      render();
+    }));
+    $('search').addEventListener('input', render);
+    $('list').addEventListener('click', (e) => {
+      const del = e.target.closest('[data-del]')?.dataset.del;
+      if (del) removePosts([del]);
+    });
+    $('list').addEventListener('change', (e) => {
+      const id = e.target.dataset.check;
+      if (!id) return;
+      e.target.checked ? selected.add(id) : selected.delete(id);
+      render();
+    });
+    $('selectAll').addEventListener('click', () => {
+      const ids = visible().map((p) => p.id);
+      const all = ids.every((id) => selected.has(id));
+      ids.forEach((id) => (all ? selected.delete(id) : selected.add(id)));
+      render();
+    });
+    $('bulkDelete').addEventListener('click', () => removePosts([...selected]));
+
+    load();
+  </script>
+</body>
+</html>

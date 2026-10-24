@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Área do Colaborador — Tripulare</title>
+  <link rel="icon" href="../assets/tripulare-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/crewlife/admin.css" />
+</head>
+<body>
+  <div id="loading" class="loading"><div><div class="spinner"></div>Carregando…</div></div>
+
+  <!-- Login -->
+  <div id="login" class="login-wrap" hidden>
+    <form class="login-card" id="loginForm" novalidate>
+      <div class="logo"><img src="../assets/tripulare-logo.png" alt="" /><span>Tripulare</span></div>
+      <h1>Área do colaborador</h1>
+      <p class="sub">Entre com sua conta Tripulare para gerenciar o conteúdo do site e do app.</p>
+      <div id="loginMsg"></div>
+      <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required /></div>
+      <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required /></div>
+      <button class="btn" id="loginBtn" type="submit">Entrar</button>
+      <p style="text-align:center;margin-top:16px"><button type="button" class="link-btn" id="forgot">Esqueci minha senha</button></p>
+      <p style="text-align:center;margin-top:18px;font-size:13px"><a href="../index.html" style="color:var(--muted);text-decoration:none">← Voltar ao site</a></p>
+    </form>
+  </div>
+
+  <!-- Logado, mas ainda não é colaborador -->
+  <div id="pending" class="login-wrap" hidden>
+    <div class="login-card">
+      <div class="logo"><img src="../assets/tripulare-logo.png" alt="" /><span>Tripulare</span></div>
+      <h1>Acesso pendente</h1>
+      <p class="sub">Sua conta ainda não está liberada como colaborador. Envie o código abaixo para o administrador do Tripulare liberar seu acesso.</p>
+      <div class="msg warn">Seu código de colaborador:<code class="uid" id="uid"></code></div>
+      <button class="btn ghost" id="copyUid" style="width:100%;margin-bottom:10px">Copiar código</button>
+      <button class="btn" id="pendingLogout" style="width:100%">Sair e entrar com outra conta</button>
+    </div>
+  </div>
+
+  <!-- Hub -->
+  <main id="hub" class="container" hidden>
+    <h1 class="page-title" id="hello">Olá!</h1>
+    <p class="page-sub">O que você quer fazer hoje?</p>
+    <div class="hub">
+      <a class="hub-card" href="crew-life.html">
+        <div class="ic">✈</div>
+        <h3>Crew Life</h3>
+        <p>Crie, edite e exclua os posts do blog. Eles aparecem no site e na Home do app.</p>
+      </a>
+      <div class="hub-card disabled">
+        <div class="ic">＋</div>
+        <h3>Mais ferramentas</h3>
+        <p>Em breve, novas áreas para a equipe Tripulare.</p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, currentUser, getStaff, renderTopbar } from '../assets/crewlife/admin.js';
+    import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { escapeHtml } from '../assets/crewlife/config.js';
+
+    const $ = (id) => document.getElementById(id);
+    const next = new URLSearchParams(location.search).get('next');
+    const show = (id) => ['loading', 'login', 'pending', 'hub'].forEach((x) => ($(x).hidden = x !== id));
+    const msg = (text, type = 'error') => ($('loginMsg').innerHTML = text ? `<div class="msg ${type}">${escapeHtml(text)}</div>` : '');
+
+    async function route(user) {
+      if (!user) return show('login');
+      let staff = null;
+      try { staff = await getStaff(user); } catch {}
+      if (!staff) {
+        $('uid').textContent = user.uid;
+        return show('pending');
+      }
+      // Volta pra página que pediu login (só caminhos locais da área).
+      if (next && /^[a-z-]+\.html(\?[^\s]*)?$/i.test(next)) return location.replace(next);
+      renderTopbar(staff);
+      $('hello').textContent = `Olá, ${staff.name.split(' ')[0]}!`;
+      show('hub');
+    }
+
+    $('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      if (!email || !password) return msg('Preencha e-mail e senha.');
+      $('loginBtn').disabled = true;
+      msg('');
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await route(cred.user);
+      } catch (err) {
+        const c = err.code || '';
+        msg(c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found')
+          ? 'E-mail ou senha incorretos.'
+          : c.includes('too-many-requests') ? 'Muitas tentativas. Aguarde alguns minutos.' : 'Não foi possível entrar. Tente de novo.');
+      } finally {
+        $('loginBtn').disabled = false;
+      }
+    });
+
+    $('forgot').addEventListener('click', async () => {
+      const email = $('email').value.trim();
+      if (!email) return msg('Digite seu e-mail no campo acima e toque de novo em "Esqueci minha senha".', 'warn');
+      try {
+        await sendPasswordResetEmail(auth, email);
+        msg('Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', 'ok');
+      } catch { msg('Não foi possível enviar o e-mail agora.'); }
+    });
+
+    $('copyUid').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText($('uid').textContent); $('copyUid').textContent = 'Copiado ✓'; } catch {}
+    });
+    $('pendingLogout').addEventListener('click', async () => { await signOut(auth); show('login'); });
+
+    route(await currentUser());
+  </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crew Life — Tripulare</title>
+  <meta name="description" content="Crew Life: histórias, dicas e bastidores da vida de comissário de bordo. Rotina, carreira, salários, processos seletivos e muito mais." />
+  <meta property="og:title" content="Crew Life — Tripulare" />
+  <meta property="og:description" content="Histórias, dicas e bastidores da vida de comissário de bordo." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://www.tripulare.com.br/assets/tripulare-logo.png" />
+  <link rel="icon" href="../assets/tripulare-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/crewlife/site.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="../index.html"><img src="../assets/tripulare-logo.png" alt="Tripulare" /><span>Tripulare</span></a>
+    <div class="nav-links">
+      <a class="hide-sm" href="../index.html">Início</a>
+      <a class="active" href="./">Crew Life</a>
+      <a class="btn-nav" href="../index.html#download">Baixar o app</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="eyebrow">✈ Blog Tripulare</span>
+      <h1>Crew Life</h1>
+      <p>Bastidores, rotina e dicas reais de quem vive a aviação — pra você chegar preparado no seu primeiro voo.</p>
+    </div>
+  </header>
+
+  <main class="posts wrap">
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div class="more"><button id="more" class="btn ghost" hidden>Carregar mais posts</button></div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <span>© 2026 Tripulare · Feito com ❤️ para a aviação brasileira</span>
+      <div>
+        <a href="../privacidade.html">Privacidade</a>
+        <a href="../termos.html">Termos</a>
+        <a href="../colaboradores/">Área do colaborador</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { listPublishedPosts } from '../assets/crewlife/public-api.js';
+    import { cloudinaryResize, formatDate, escapeHtml } from '../assets/crewlife/config.js';
+
+    const PAGE = 12;
+    const grid = document.getElementById('grid');
+    const moreBtn = document.getElementById('more');
+    let last = null;
+    let count = 0;
+
+    const planeIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>';
+
+    function card(p, featured) {
+      const img = p.coverUrl ? cloudinaryResize(p.coverUrl, featured ? 'c_fill,w_1200,h_700,q_auto,f_auto' : 'c_fill,w_720,h_405,q_auto,f_auto') : '';
+      const meta = [formatDate(p.publishedAt), p.readMinutes ? `${p.readMinutes} min de leitura` : ''].filter(Boolean).join(' · ');
+      return `
+        <a class="post-card${featured ? ' featured' : ''}" href="post.html?p=${encodeURIComponent(p.id)}">
+          <div class="thumb" ${img ? `style="background-image:url('${escapeHtml(img)}')"` : ''}>${img ? '' : planeIcon}</div>
+          <div class="body">
+            <h2>${escapeHtml(p.title)}</h2>
+            <p>${escapeHtml(p.excerpt)}</p>
+            <div class="meta">${escapeHtml(meta)}</div>
+          </div>
+        </a>`;
+    }
+
+    function skeletons(n) {
+      grid.innerHTML = Array.from({ length: n }, () => `
+        <div class="post-card"><div class="thumb skeleton" style="border-radius:0"></div>
+          <div class="body"><div class="skeleton" style="height:22px;width:85%"></div>
+          <div class="skeleton" style="height:14px;width:100%"></div><div class="skeleton" style="height:14px;width:70%"></div></div></div>`).join('');
+    }
+
+    async function load() {
+      moreBtn.disabled = true;
+      try {
+        const posts = await listPublishedPosts({ pageSize: PAGE, after: last });
+        if (!last) grid.innerHTML = '';
+        if (!posts.length && !count) {
+          grid.outerHTML = `<div class="empty"><h2>Os primeiros posts estão decolando ✈️</h2><p>Em breve tem conteúdo novo por aqui. Volte logo!</p></div>`;
+          return;
+        }
+        grid.insertAdjacentHTML('beforeend', posts.map((p, i) => card(p, count === 0 && i === 0)).join(''));
+        count += posts.length;
+        last = posts[posts.length - 1] || last;
+        moreBtn.hidden = posts.length < PAGE;
+      } catch (e) {
+        if (!count) grid.outerHTML = `<div class="error-box"><p>Não foi possível carregar os posts agora. Verifique sua conexão e tente de novo.</p><p style="margin-top:14px"><button class="btn" onclick="location.reload()">Tentar novamente</button></p></div>`;
+      } finally {
+        moreBtn.disabled = false;
+      }
+    }
+
+    moreBtn.addEventListener('click', load);
+    skeletons(3);
+    load();
+  </script>
+</body>
+</html>

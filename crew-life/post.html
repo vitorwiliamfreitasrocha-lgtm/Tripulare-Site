@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crew Life — Tripulare</title>
+  <meta name="description" content="Crew Life: histórias, dicas e bastidores da vida de comissário de bordo." />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Crew Life — Tripulare" />
+  <meta property="og:image" content="https://www.tripulare.com.br/assets/tripulare-logo.png" />
+  <link rel="icon" href="../assets/tripulare-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/crewlife/site.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="../index.html"><img src="../assets/tripulare-logo.png" alt="Tripulare" /><span>Tripulare</span></a>
+    <div class="nav-links">
+      <a class="hide-sm" href="../index.html">Início</a>
+      <a class="active" href="./">Crew Life</a>
+      <a class="btn-nav" href="../index.html#download">Baixar o app</a>
+    </div>
+  </nav>
+
+  <article class="article" id="article">
+    <a class="back" href="./">← Todos os posts</a>
+    <div class="skeleton" style="height:44px;width:90%;margin:12px 0"></div>
+    <div class="skeleton" style="height:18px;width:40%;margin-bottom:28px"></div>
+    <div class="skeleton" style="aspect-ratio:16/9;width:100%;border-radius:18px"></div>
+  </article>
+
+  <footer class="footer">
+    <div class="wrap">
+      <span>© 2026 Tripulare · Feito com ❤️ para a aviação brasileira</span>
+      <div>
+        <a href="../privacidade.html">Privacidade</a>
+        <a href="../termos.html">Termos</a>
+        <a href="../colaboradores/">Área do colaborador</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { getPublishedPost } from '../assets/crewlife/public-api.js';
+    import { cloudinaryResize, formatDate, escapeHtml, sanitizePostHtml, postUrl, PLAY_STORE_URL, APP_STORE_URL } from '../assets/crewlife/config.js';
+
+    const el = document.getElementById('article');
+    const id = new URLSearchParams(location.search).get('p');
+
+    function setMeta(prop, content, attr = 'property') {
+      let m = document.head.querySelector(`meta[${attr}="${prop}"]`);
+      if (!m) { m = document.createElement('meta'); m.setAttribute(attr, prop); document.head.appendChild(m); }
+      m.setAttribute('content', content);
+    }
+
+    function notFound() {
+      el.innerHTML = `<a class="back" href="./">← Todos os posts</a>
+        <div class="empty"><h2>Post não encontrado</h2><p>Ele pode ter sido removido ou o link está incorreto.</p>
+        <p style="margin-top:16px"><a class="btn" href="./">Ver todos os posts</a></p></div>`;
+    }
+
+    async function render() {
+      if (!id) return notFound();
+      let post;
+      try {
+        post = await getPublishedPost(id);
+      } catch {
+        el.innerHTML = `<a class="back" href="./">← Todos os posts</a><div class="error-box"><p>Não foi possível carregar o post agora.</p><p style="margin-top:14px"><button class="btn" onclick="location.reload()">Tentar novamente</button></p></div>`;
+        return;
+      }
+      if (!post) return notFound();
+
+      const url = postUrl(post.id);
+      document.title = `${post.title} — Crew Life`;
+      setMeta('description', post.excerpt || '', 'name');
+      setMeta('og:title', post.title);
+      setMeta('og:description', post.excerpt || '');
+      setMeta('og:url', url);
+      if (post.coverUrl) setMeta('og:image', cloudinaryResize(post.coverUrl, 'c_fill,w_1200,h_630,q_auto,f_jpg'));
+
+      const meta = [post.authorName ? `Por ${post.authorName}` : '', formatDate(post.publishedAt), post.readMinutes ? `${post.readMinutes} min de leitura` : ''].filter(Boolean).join(' · ');
+      const cover = post.coverUrl ? `<img class="cover" src="${escapeHtml(cloudinaryResize(post.coverUrl, 'c_limit,w_1600,q_auto,f_auto'))}" alt="" />` : '';
+      const shareText = encodeURIComponent(`${post.title} — ${url}`);
+
+      el.innerHTML = `
+        <a class="back" href="./">← Todos os posts</a>
+        <span class="eyebrow" style="color:var(--teal);background:var(--teal-soft);border-color:#C9ECE5">Crew Life</span>
+        <h1>${escapeHtml(post.title)}</h1>
+        <div class="meta">${escapeHtml(meta)}</div>
+        ${cover}
+        <div class="post-body">${sanitizePostHtml(post.contentHtml || '')}</div>
+        <div class="share">
+          <span>Compartilhe:</span>
+          <a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/?text=${shareText}">WhatsApp</a>
+          <a class="btn ghost" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}">LinkedIn</a>
+          <a class="btn ghost" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}">Facebook</a>
+          <button class="btn ghost" id="copy">Copiar link</button>
+        </div>
+        <div class="app-cta">
+          <div><h3>Quer ser comissário(a)?</h3><p>Simulados ANAC, inglês de bordo e tudo pra sua carreira no app Tripulare.</p></div>
+          <a class="btn" target="_blank" rel="noopener" href="${PLAY_STORE_URL}">Google Play</a>
+          <a class="btn" target="_blank" rel="noopener" href="${APP_STORE_URL}" style="background:#fff;color:#0D1B1E">App Store</a>
+        </div>`;
+
+      document.getElementById('copy').addEventListener('click', async (e) => {
+        try { await navigator.clipboard.writeText(url); e.target.textContent = 'Link copiado ✓'; }
+        catch { prompt('Copie o link:', url); }
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
