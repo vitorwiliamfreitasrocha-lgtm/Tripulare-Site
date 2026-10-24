@@ -22,6 +22,7 @@ body {
   display: flex; flex-direction: column;
 }
 a { color: var(--teal); }
+[hidden] { display: none !important; }
 img { max-width: 100%; }
 h1, h2, h3, .sora { font-family: Sora, -apple-system, sans-serif; letter-spacing: -0.02em; }
 
