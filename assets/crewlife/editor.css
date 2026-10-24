@@ -8,6 +8,11 @@
   color: var(--ink); letter-spacing: -0.02em; padding: 10px 0 16px; outline: none; min-height: 1.6em;
 }
 .title-input::placeholder { color: #C3CFCE; }
+.subtitle-input {
+  width: 100%; border: 0; background: transparent; resize: none; overflow: hidden; outline: none;
+  font: inherit; font-size: 19px; line-height: 1.5; color: var(--ink-2); padding: 0 0 18px; margin-top: -6px; min-height: 1.6em;
+}
+.subtitle-input::placeholder { color: #B5C3C2; }
 
 .editor-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; }
 #toolbar.ql-toolbar.ql-snow {

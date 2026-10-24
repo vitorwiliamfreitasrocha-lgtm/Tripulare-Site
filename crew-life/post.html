@@ -89,6 +89,7 @@
         <a class="back" href="./">← Todos os posts</a>
         <span class="eyebrow" style="color:var(--teal);background:var(--teal-soft);border-color:#C9ECE5">Crew Life</span>
         <h1>${escapeHtml(post.title)}</h1>
+        ${post.subtitle ? `<p class="lead">${escapeHtml(post.subtitle)}</p>` : ''}
         <div class="meta">${escapeHtml(meta)}</div>
         ${cover}
         <div class="post-body">${sanitizePostHtml(post.contentHtml || '')}</div>

@@ -118,9 +118,12 @@ let saving = false;
 const backupKey = () => `crewlife_backup_${postId || 'new'}`;
 
 const titleEl = $('title');
+const subtitleEl = $('subtitle');
 const excerptEl = $('excerpt');
 
-function autoGrow() { titleEl.style.height = 'auto'; titleEl.style.height = `${titleEl.scrollHeight}px`; }
+function autoGrow() {
+  for (const el of [titleEl, subtitleEl]) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; }
+}
 
 function plainText() { return quill.getText().replace(/\s+/g, ' ').trim(); }
 
@@ -136,7 +139,7 @@ function stats() {
   const minutes = Math.max(1, Math.round(words / 200));
   $('words').textContent = words.toLocaleString('pt-BR');
   $('minutes').textContent = minutes;
-  excerptEl.placeholder = autoExcerpt() || 'Gerado automaticamente a partir do texto';
+  excerptEl.placeholder = subtitleEl.value.trim() || autoExcerpt() || 'Gerado automaticamente a partir do texto';
   return { words, minutes };
 }
 
@@ -184,7 +187,7 @@ function scheduleBackup() {
   backupTimer = setTimeout(() => {
     try {
       localStorage.setItem(backupKey(), JSON.stringify({
-        at: Date.now(), title: titleEl.value, excerpt: excerptEl.value, coverUrl, delta: quill.getContents(),
+        at: Date.now(), title: titleEl.value, subtitle: subtitleEl.value, excerpt: excerptEl.value, coverUrl, delta: quill.getContents(),
       }));
     } catch {}
   }, 800);
@@ -202,6 +205,7 @@ function offerRestore(savedAtMs) {
   box.hidden = false;
   $('doRestore').onclick = () => {
     titleEl.value = b.title || '';
+    subtitleEl.value = b.subtitle || '';
     excerptEl.value = b.excerpt || '';
     coverUrl = b.coverUrl || '';
     quill.setContents(b.delta || [], 'silent');
@@ -224,6 +228,7 @@ async function load() {
       const p = snap.data();
       current = p;
       titleEl.value = p.title || '';
+      subtitleEl.value = p.subtitle || '';
       excerptEl.value = p.excerptCustom ? p.excerpt || '' : '';
       coverUrl = p.coverIsCustom === false ? '' : p.coverUrl || '';
       if (p.contentDelta) quill.setContents(JSON.parse(p.contentDelta), 'silent');
@@ -277,7 +282,8 @@ async function save(status) {
   const wasPublished = current.status === 'published';
   const data = {
     title,
-    excerpt: customExcerpt || autoExcerpt(),
+    subtitle: subtitleEl.value.trim(),
+    excerpt: customExcerpt || subtitleEl.value.trim() || autoExcerpt(),
     excerptCustom: !!customExcerpt,
     // Sem capa escolhida, usa a primeira imagem do texto (o card do app fica com foto).
     coverUrl: coverUrl || firstImage(),
@@ -364,7 +370,9 @@ window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault()
 
 // ── Campos ───────────────────────────────────────────────────────────────
 titleEl.addEventListener('input', () => { autoGrow(); setDirty(); });
-titleEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); quill.focus(); } });
+titleEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); subtitleEl.focus(); } });
+subtitleEl.addEventListener('input', () => { autoGrow(); stats(); setDirty(); });
+subtitleEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); quill.focus(); } });
 excerptEl.addEventListener('input', () => { $('excerptCount').textContent = excerptEl.value.length; setDirty(); });
 quill.on('text-change', (_d, _o, source) => { stats(); hideImgTools(); if (source === 'user') setDirty(); });
 
@@ -448,6 +456,7 @@ function previewDoc() {
     <article class="article">
       <span class="eyebrow" style="color:#0EA08C;background:#E6F6F3;border-color:#C9ECE5">Crew Life</span>
       <h1>${escapeHtml(titleEl.value.trim() || 'Título do post')}</h1>
+      ${subtitleEl.value.trim() ? `<p class="lead">${escapeHtml(subtitleEl.value.trim())}</p>` : ''}
       <div class="meta">${escapeHtml(meta)}</div>
       ${cover ? `<img class="cover" src="${escapeHtml(cover)}" alt="">` : ''}
       <div class="post-body">${contentHtml()}</div>
